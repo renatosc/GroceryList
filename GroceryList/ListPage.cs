@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using GroceryList.Datasource;
 using GroceryList.ViewModel;
 using Xamarin.Forms;
@@ -36,27 +37,41 @@ namespace GroceryList
 
         public ListPage()
         {
-            reloadData();
+            
 
             ToolbarItem itemReset = new ToolbarItem() { Text = "Reset" };
             ToolbarItems.Add(itemReset);
             itemReset.Clicked += OnResetTap;
+
+            lstView = new ListView();
+            lstView.IsGroupingEnabled = true;
+            lstView.GroupDisplayBinding = new Binding("LongName");
+            lstView.ItemTemplate = new DataTemplate(typeof(ImageCell));
+            lstView.ItemTemplate.SetBinding(ImageCell.TextProperty, "Name");
+            lstView.ItemTemplate.SetBinding(ImageCell.DetailProperty, "Location");
+
+            lstView.ItemTapped += Handle_ItemTapped;
+
+            ReloadData();
+
+            Content = lstView;
 
             this.Title = "My Grocery List";
 
         }
 
 
-        void reloadData()
+        async Task ReloadData()
         {
             Debug.WriteLine("ON RELOAD DATA");
-            lstView = new ListView();
+            
             grouped = new ObservableCollection<GroupedGroceryItem>();
             var groupPending = new GroupedGroceryItem() { LongName = "Pending", ShortName = "P" };
             var groupCompleted = new GroupedGroceryItem() { LongName = "Completed", ShortName = "C" };
 
-            if (items == null)
-                items = (new GroceryDatasource()).GetData();
+            if (items == null)            
+                items = await GroceryDatasource.GetData();
+            
 
             foreach (GroceryItem item in items)
             {
@@ -76,30 +91,16 @@ namespace GroceryList
             Debug.WriteLine("groupPending.count=" + groupPending.Count);
             Debug.WriteLine("groupCompleted.count=" + groupCompleted.Count);
 
-
             lstView.ItemsSource = grouped;
-            lstView.IsGroupingEnabled = true;
-            lstView.GroupDisplayBinding = new Binding("LongName");
-
-            lstView.ItemTemplate = new DataTemplate(typeof(ImageCell));
-            lstView.ItemTemplate.SetBinding(ImageCell.TextProperty, "Name");
-            lstView.ItemTemplate.SetBinding(ImageCell.DetailProperty, "Location");
-            //lstView.ItemTemplate.SetBinding(ImageCell.Completed, "Completed");
-
-            lstView.ItemTapped += Handle_ItemTapped;            
-
-            Content = lstView;
-
         }
 
         void OnResetTap(object sender, EventArgs e)
-        {
-            //this.Navigation.PushAsync(new SwitchPageCode());            
+        {     
             foreach (GroceryItem item in items)
             {
                 item.Completed = false;
             }
-            reloadData();
+            ReloadData();
         }
 
 
@@ -113,19 +114,10 @@ namespace GroceryList
             Debug.WriteLine("isCompleted="+ isCompleted);
             bool result = await DisplayAlert(item.Name, "Mark as " + (isCompleted ? "Pending" : "Completed") + "?", "OK", "Cancel");
             if (result)
-            {         
-                if (isCompleted)
-                {
-                    
-                } else
-                {
-
-                }
-                //lstView.BeginRefresh();
+            {                         
                 item.Completed = !item.Completed;
-                //items.Remove(item);
-                //lstView.EndRefresh();
-                reloadData();
+                ReloadData();
+                GroceryDatasource.UpdateItem(item);
             }
 
 
