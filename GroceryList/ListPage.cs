@@ -102,7 +102,7 @@ namespace GroceryList
         {     
             foreach (GroceryItem item in items)
             {
-                item.Completed = false;
+                item.Completed = true;
             }
             ReloadData();
         }
