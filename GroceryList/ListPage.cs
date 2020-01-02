@@ -103,6 +103,7 @@ namespace GroceryList
             foreach (GroceryItem item in items)
             {
                 item.Completed = true;
+                GroceryDatasource.UpdateItem(item);
             }
             ReloadData();
         }
