@@ -43,6 +43,10 @@ namespace GroceryList
             ToolbarItems.Add(itemReset);
             itemReset.Clicked += OnResetTap;
 
+            ToolbarItem itemRefresh = new ToolbarItem() { Text = "Refresh" };
+            ToolbarItems.Add(itemRefresh);
+            itemRefresh.Clicked += OnRefreshTap;
+
             lstView = new ListView();
             lstView.IsGroupingEnabled = true;
             lstView.GroupDisplayBinding = new Binding("LongName");
@@ -103,7 +107,12 @@ namespace GroceryList
             ReloadData();
         }
 
-
+        void OnRefreshTap(object sender, EventArgs e)
+        {
+            items = null;
+            ReloadData();
+        }
+       
         async void Handle_ItemTapped(object sender, ItemTappedEventArgs e)
         {
             if (e.Item == null)
